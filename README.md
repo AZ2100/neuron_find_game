@@ -1,4 +1,3 @@
-# neuron_find_game
 # Neuron Find Tool
 
 This tool is used to circle ROI (regions of interest) in Neuron images
@@ -48,7 +47,7 @@ python3 src/main.py
 
 ## This will bring up a `pygame` window which you will see an image on the left and buttons on the right
 
-![Alt Text](https://media.giphy.com/media/FPahPJEBP4i5nZ48Yb/giphy.gif)
+![Alt Text](https://media.giphy.com/media/5563MfG2K6ANPCUnAb/giphy.gif)
 
 # Things to know about the tool
 
