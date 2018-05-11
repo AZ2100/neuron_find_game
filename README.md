@@ -47,7 +47,7 @@ python3 src/main.py
 
 ## This will bring up a `pygame` window which you will see an image on the left and buttons on the right
 
-![Alt Text](https://media.giphy.com/media/5563MfG2K6ANPCUnAb/giphy.gif)
+![Alt Text](https://media.giphy.com/media/3gWIfrVa37glvztGOh/giphy.gif)
 
 # Things to know about the tool
 
