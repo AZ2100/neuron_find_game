@@ -59,7 +59,7 @@ There are two stages to each image evaluation:
       * You can `undo` a change (This tool is kinda useless after I added remove but its still here)
       * And you can hit `DONE` which puts you in "Seeing Mode"
       
-      Note: if you do not select any neurons, select `skip` and _not_ `DONE`, or else the program will close.
+      Note: if you do not select any neurons, select `skip` and _not_ `DONE`.
       
 *   Stage 2) - "Seeing" (Validating)
       * In this stage you can see your ROIs on left vs Auto Generated ROIs on right
