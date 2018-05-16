@@ -1,6 +1,6 @@
 # Neuron Find Tool
 
-This tool is used to circle ROI (regions of interest) in Neuron images
+This tool is used to circle ROI (regions of interest) in Neuron images.
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ If you do not have `python3` (any version of 3) then download `python3` and `pip
 
 Make sure the project interpreter and all of the code is Python 3.
 
-You must have Pygame. If you do not, follow th instructions here:
+You must have Pygame. If you do not, follow the instructions here:
 http://kidscancode.org/blog/2015/09/pygame_install/
 
 ### Installing
