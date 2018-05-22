@@ -3,6 +3,7 @@ import util
 import os
 import sys
 import time
+import copy
 
 DISPLAY_SIZE = (1024, 512)
 #H_WINDOW_SIZE = (256, 256)
@@ -38,14 +39,24 @@ class game():
         self.very_small_font = pygame.font.Font('freesansbold.ttf', 10)
         x = DISPLAY_SIZE[0] / 2
 
-        self.undo = button(x, 0, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Undo", self.font, RED, BLACK)
-        self.skip = button(x, DISPLAY_SIZE[1] / 4 - 1.9, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 3.9, "Skip",
+        #self.undo = button(x, 0, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Undo", self.font, RED, BLACK)
+        self.undo = button(x, DISPLAY_SIZE[1] / 4 - 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Undo", self.font, RED, BLACK)
+        # self.skip = button(x, DISPLAY_SIZE[1] / 4 - 1.9, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 3.9, "Skip",
+        #                    self.font, LLBLUE, BLACK)
+        # self.done = button(x, DISPLAY_SIZE[1] / 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 2, "Done",
+        #                    self.font, GREEN, BLACK)
+
+        self.skip = button(x, DISPLAY_SIZE[1] / 2 - 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Skip",
                            self.font, LLBLUE, BLACK)
-        self.done = button(x, DISPLAY_SIZE[1] / 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 2, "Done",
+        self.done = button(x, DISPLAY_SIZE[1] / 1.33 - 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Done",
                            self.font, GREEN, BLACK)
+
         #self.help = button(DISPLAY_SIZE[0]-40, DISPLAY_SIZE[1]-40, 40, 40, "?", self.small_font, WHITE, BLACK)
         self.boarder = pygame.Surface((DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1])).convert()
         self.boarder.fill(WHITE)
+
+        self.previous = button(x, 0, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Previous",
+                           self.font, GRAY, BLACK)
 
         self.next_image = button(x - 50, DISPLAY_SIZE[1] - 40, 100, 50, "Next", self.small_font, LBLUE, BLACK)
         self.filtered = button(x - 50, -5, 100, 50, "Filter", self.small_font, LBLUE, BLACK)
@@ -70,13 +81,15 @@ class game():
         for circle in circles:
             pygame.draw.circle(self._display_surf, DRED, circle, 8, 2)
 
-    def play(self, image, circles, subject):
+    def play(self, image, circles, subject, image_index):
         self._display_surf.blit(self.boarder, (DISPLAY_SIZE[0] / 2, 0))
+        self.previous.draw(self._display_surf)
         self.undo.draw(self._display_surf)
         self.skip.draw(self._display_surf)
         self.done.draw(self._display_surf)
         #self.help.draw(self._display_surf)
         playing = True
+        prev = False
         raw_metric = None
         filtered_metric = None
         while playing:
@@ -108,6 +121,9 @@ class game():
                     elif self.skip.rect.collidepoint(event.pos):
                         return None
 
+                    elif self.previous.rect.collidepoint(event.pos):
+                        if (image_index >= 1): return 20
+
                     elif self.done.rect.collidepoint(event.pos):
                         if len(circles) > 0:
                             raw_metric = util.score_string(circles, self.data[subject]['raw-circles'])
@@ -118,8 +134,8 @@ class game():
                         else:
                             print ("You haven't circled any neurons.")
 
-            pygame.display.flip()
-            self.clock.tick(10)
+                pygame.display.flip()
+                self.clock.tick(10)
 
         return raw_metric, filtered_metric
 
@@ -162,33 +178,46 @@ class game():
         raw_metric = None
         filtered_metric = None
 
-        for subject in self.data:
-            pygame.display.set_caption(subject)
+        datalist = list(self.data.keys())
+        print(type(datalist))
+        i = 0
+        while (i < len(datalist)):
+            pygame.display.set_caption("")
             width = int(DISPLAY_SIZE[0] / 2)
             height = DISPLAY_SIZE[1]
-            image = pygame.transform.scale(pygame.image.load(self.data[subject]['image-clean']),
+            image = pygame.transform.scale(pygame.image.load(self.data[datalist[i]]['image-clean']),
                                            (width, height)).convert()
-            image_done_raw = pygame.transform.scale(pygame.image.load(self.data[subject]['image-raw']),
+            image_done_raw = pygame.transform.scale(pygame.image.load(self.data[datalist[i]]['image-raw']),
                                                     (width, height)).convert()
-            image_done_filtered = pygame.transform.scale(pygame.image.load(self.data[subject]['image-filtered']),
+            image_done_filtered = pygame.transform.scale(pygame.image.load(self.data[datalist[i]]['image-filtered']),
                                                          (width, height)).convert()
 
             circles = []
             playing = True
             skip = False
+            previous = False
             while playing:
-                output = self.play(image, circles, subject)
-                if output is None:
+                output = self.play(image, circles, datalist[i], i)
+                if output == 20:
+                    i-=2
+                    previous = True
+                    break
+                elif output is None:
                     skip = True
                     break
                 raw_metric, filtered_metric = output
                 playing = self.seeing(image, circles, image_done_raw, image_done_filtered, raw_metric, filtered_metric)
 
-            if not skip:
-                this_path = os.path.join(self.data[subject]['out_path'], str(time.time()))
+            if not skip and not previous:
+                # Saving the metrics
+                this_path = os.path.join(self.data[datalist[i]]['out_path'], str(time.time()))
                 util.csv_save(circles, this_path + "-gold_circles.csv")
                 util.save_string("RAW: " + raw_metric, this_path + "-metic.txt")
                 util.save_string("FILTERED: " + filtered_metric, this_path + "-metic.txt")
+
+            i+=1
+
+
 
 
 class button():

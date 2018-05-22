@@ -1,6 +1,6 @@
 # Neuron Find Tool
 
-This tool is used to circle ROI (regions of interest) in Neuron images.
+This tool is used to circle ROI (regions of interest) in Neuron images
 
 ## Getting Started
 
@@ -59,7 +59,7 @@ There are two stages to each image evaluation:
       * You can `undo` a change (This tool is kinda useless after I added remove but its still here)
       * And you can hit `DONE` which puts you in "Seeing Mode"
       
-      Note: if you do not select any neurons, select `skip` and _not_ `DONE`.
+      Note: if you do not select any neurons, select `skip` and not `DONE`.
       
 *   Stage 2) - "Seeing" (Validating)
       * In this stage you can see your ROIs on left vs Auto Generated ROIs on right
