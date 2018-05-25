@@ -4,6 +4,10 @@ import os
 import sys
 import time
 
+"""This code is to compare user-identified neurons from images and compare 
+results with computer-generated identifications. The goal is to have an 
+easy-to-use GUI and to test the accuracy of the computer-generated identifications."""
+
 DISPLAY_SIZE = (1024, 512)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -19,8 +23,16 @@ YELLOW = (236, 231, 77)
 class game():
 
     def __init__(self, data_path="../game_data"):
+        """
+        Establishes attributes of the game.
+
+        :param data_path: images in each item of game_data
+        """
+
+        #Starts the clock from 0 and the display with nothing on it
         self.clock = None
         self._display_surf = None
+
         ### Do the pygame init stuff
         self.init()
 
@@ -69,11 +81,26 @@ class game():
         pygame.display.flip()
 
     def drawGame(self, image, circles):
+        """
+
+        :param image: pygame.Surface
+        :param circles: list of coordinates
+        :return: image with circles
+        """
         self._display_surf.blit(image, (0, 0))
         for circle in circles:
             pygame.draw.circle(self._display_surf, DRED, circle, 8, 2)
 
     def play(self, image, circles, subject, image_index):
+        """
+        The first screen, in which the user navigates through images and annotates them.
+        :param image: pygame.Surface
+        :param circles: list of coordinates
+        :param subject: str
+        :param image_index: int
+        :return: bool
+        """
+        print(type(image_index))
         # display existing points in the list 'circles'
         self._display_surf.blit(self.boarder, (DISPLAY_SIZE[0] / 2, 0))
         self.previous.draw(self._display_surf)
@@ -131,6 +158,18 @@ class game():
         return raw_metric, filtered_metric
 
     def seeing(self, image, circles, image_done_raw, image_done_filtered, raw_metric, filtered_metric):
+        """
+        Displays comparison of computer-generated neuron identifications with user-identified neurons. Includes
+        RAW and FILTERED options for viewing.
+        :param image: pygame.Surface
+        :param circles: list of coordinates
+        :param image_done_raw: pygame.Surface
+        :param image_done_filtered: pygame.Surface
+        :param raw_metric: str
+        :param filtered_metric: int
+        :return: bool
+        """
+
         seeing = True
         raw = True
         while seeing:
@@ -147,6 +186,7 @@ class game():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                #left-click on button
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.next_image.rect.collidepoint(event.pos):
                         print("Moving on")
@@ -167,14 +207,20 @@ class game():
 
 
     def menu(self):
+        """
+        Displays menu from which user can select any clean image in the data set.
+        :return: bool
+        """
         viewing = True
         datalist = list(self.data.keys())
         i = 0
         y = 0
+
+        # index at the end of each page
         page_end = 10
-        #index at the end of each page
+
+        # number of buttons on current screen
         onscreen = 0
-        #number of buttons on current screen
 
         pygame.display.update()
         background = pygame.Surface(DISPLAY_SIZE)
@@ -184,8 +230,7 @@ class game():
         pygame.display.flip()
         pygame.display.update()
 
-        allilist = []
-        #will store all buttons of images
+        buttonlist = []
 
         self.mnext = button(600, DISPLAY_SIZE[1] - 42, 100, 42, "Next",
                           self.small_font, LBLUE, BLACK)
@@ -193,10 +238,11 @@ class game():
                          self.small_font, LBLUE, BLACK)
 
         while (i < page_end):
+            #generates and displays 10 buttons per page
             self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
                              self.small_font, GRAY, BLACK)
             self.n1.draw(self._display_surf)
-            allilist.append(self.n1)
+            buttonlist.append(self.n1)
             pygame.display.update()
             i += 1
             y += 47
@@ -214,6 +260,7 @@ class game():
                 elif event.type == pygame.MOUSEBUTTONDOWN:
 
                     if(page_end <= len(datalist)):
+                        #Actions for "Next" button in menu
                         if (self.mnext.rect.collidepoint(event.pos)):
                             if (page_end+10 <= len(datalist)):
                                 onscreen = 10
@@ -224,7 +271,7 @@ class game():
                                     self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
                                                      self.small_font, GRAY, BLACK)
                                     self.n1.draw(self._display_surf)
-                                    allilist.append(self.n1)
+                                    buttonlist.append(self.n1)
                                     i += 1
                                     y += 47
 
@@ -234,6 +281,7 @@ class game():
                                 pygame.display.update()
 
                             elif (i != len(datalist)):
+                                #May have less than 10 buttons on last page
                                 onscreen = len(datalist) - i
                                 y = 0
                                 self._display_surf.blit(background, (0, 0))
@@ -241,12 +289,12 @@ class game():
                                     self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
                                                      self.small_font, GRAY, BLACK)
                                     self.n1.draw(self._display_surf)
-                                    allilist.append(self.n1)
+                                    buttonlist.append(self.n1)
                                     i += 1
                                     y += 47
                                     page_end+=1
 
-
+                        #Actions for "Previous" button in menu
                         elif (self.mprevious.rect.collidepoint(event.pos)):
                             if (page_end > 10):
                                 y = 0
@@ -266,10 +314,11 @@ class game():
 
                                 onscreen = 10
 
+                    # index of each button on the current page
                     k = page_end-10
-                    #index of each button on the current page
+                    #Image selection for playing
                     while (k < page_end):
-                        if (allilist[k]).rect.collidepoint(event.pos):
+                        if (buttonlist[k]).rect.collidepoint(event.pos):
                             print("Showing " + datalist[k])
                             selected = True
                             self.gameLoop(k)
@@ -296,6 +345,11 @@ class game():
 
 
     def gameLoop(self, i1):
+        """
+        Runs entire game, including all functions (playing, seeing, menu, etc.)
+        :param i1: starting index value for looping through datalist
+        :return: game execution
+        """
         raw_metric = None
         filtered_metric = None
 
@@ -304,6 +358,7 @@ class game():
             i = 0
         else:
             i = i1
+        #declares variables to images in datalist
         while (i < len(datalist)):
             pygame.display.set_caption(datalist[i])
             width = int(DISPLAY_SIZE[0] / 2)
@@ -316,6 +371,7 @@ class game():
                                                          (width, height)).convert()
 
             circles = []
+            #checking which actions are currently being done
             playing = True
             skip = False
             previous = False
@@ -355,6 +411,9 @@ class game():
 
 
 class button():
+    """
+    Creates button with designated color, text, font, and dimensions.
+    """
     def __init__(self, x, y, w, h, text, font, color, textcolor):
         self.color = color
         border = 4

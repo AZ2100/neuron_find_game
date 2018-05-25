@@ -1,6 +1,6 @@
 # Neuron Find Tool
 
-This tool is used to circle ROI (regions of interest) in Neuron images
+This tool is used to circle ROI (regions of interest) in Neuron images and compare user input with computer generated selections. 
 
 ## Getting Started
 
@@ -45,7 +45,7 @@ python3 src/main.py
 
 
 
-## This will bring up a `pygame` window which you will see an image on the left and buttons on the right
+## This will bring up a `pygame` window in which you will see an image on the left and buttons on the right
 
 ![Alt Text](https://media.giphy.com/media/3gWIfrVa37glvztGOh/giphy.gif)
 
@@ -54,10 +54,10 @@ python3 src/main.py
 There are two stages to each image evaluation:
 *   Stage 1) - "Playing" (Annotating)
       * While playing you can click on the image on the left to mark neurons with a circle
-      * Hold `x` and click on a circle to remove it! (I think this should be very helpful)
-      * You can `skip` a Neuron and I will not get the output for it
-      * You can `undo` a change (This tool is kinda useless after I added remove but its still here)
-      * And you can hit `DONE` which puts you in "Seeing Mode"
+      * Hold `x` and click on a circle to remove it
+      * You can `skip` a neuron and I will not get the output for it
+      * You can `undo` a change
+      * And you can hit `DONE` which puts you in "Seeing Mode" after you've circled some neurons
       
       Note: if you do not select any neurons, select `skip` and not `DONE`.
       
