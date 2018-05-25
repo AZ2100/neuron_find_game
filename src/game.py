@@ -3,24 +3,18 @@ import util
 import os
 import sys
 import time
-import copy
 
 DISPLAY_SIZE = (1024, 512)
-#H_WINDOW_SIZE = (256, 256)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 102, 102)
-#LRED = (255, 129, 129)
 DRED = (255, 0, 0)
 GREEN = (102, 255, 102)
 BLUE = (102, 102, 255)
 LBLUE = (117, 192, 242)
 LLBLUE = (48, 169, 249)
 GRAY = (224, 224, 224)
-#DGRAY = (81, 81, 81)
-#AQUA = (57, 204, 226)
 YELLOW = (236, 231, 77)
-#ORANGE = (240, 160, 70)
 
 class game():
 
@@ -32,6 +26,7 @@ class game():
 
         ### Load Data
         self.data = util.load_data(data_path)
+        datalist = list(self.data.keys())
 
         ### MAKE BUTTONS
         self.font = pygame.font.Font('freesansbold.ttf', 100)
@@ -39,31 +34,28 @@ class game():
         self.very_small_font = pygame.font.Font('freesansbold.ttf', 10)
         x = DISPLAY_SIZE[0] / 2
 
-        #self.undo = button(x, 0, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Undo", self.font, RED, BLACK)
         self.undo = button(x, DISPLAY_SIZE[1] / 4 - 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Undo", self.font, RED, BLACK)
-        # self.skip = button(x, DISPLAY_SIZE[1] / 4 - 1.9, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 3.9, "Skip",
-        #                    self.font, LLBLUE, BLACK)
-        # self.done = button(x, DISPLAY_SIZE[1] / 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 2, "Done",
-        #                    self.font, GREEN, BLACK)
 
         self.skip = button(x, DISPLAY_SIZE[1] / 2 - 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Skip",
                            self.font, LLBLUE, BLACK)
         self.done = button(x, DISPLAY_SIZE[1] / 1.33 - 2, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Done",
                            self.font, GREEN, BLACK)
-
-        #self.help = button(DISPLAY_SIZE[0]-40, DISPLAY_SIZE[1]-40, 40, 40, "?", self.small_font, WHITE, BLACK)
         self.boarder = pygame.Surface((DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1])).convert()
         self.boarder.fill(WHITE)
 
-        self.previous = button(x, 0, DISPLAY_SIZE[0] / 2, DISPLAY_SIZE[1] / 4, "Previous",
-                           self.font, GRAY, BLACK)
+        self.previous = button(x, 0, DISPLAY_SIZE[0] / 4, DISPLAY_SIZE[1] / 4, "Previous",
+                           self.small_font, GRAY, BLACK)
+
+        self.allimages = button(x + 255, 0, DISPLAY_SIZE[0] / 4, DISPLAY_SIZE[1] / 4, "Show All Images",
+                                self.small_font, GRAY, BLACK)
 
         self.next_image = button(x - 50, DISPLAY_SIZE[1] - 40, 100, 50, "Next", self.small_font, LBLUE, BLACK)
         self.filtered = button(x - 50, -5, 100, 50, "Filter", self.small_font, LBLUE, BLACK)
         self.metrics = button(0, 0, 200, 20, "", self.very_small_font, None, WHITE)
         self.fix = button(-5, DISPLAY_SIZE[1] - 40, 70, 50, "Fix", self.small_font, YELLOW, None)
 
-        self.gameLoop()
+        self.gameLoop(None)
+        print("End of program")
 
     def init(self):
         pygame.init()
@@ -72,7 +64,7 @@ class game():
         pygame.display.update()
         background = pygame.Surface(DISPLAY_SIZE)
         background = background.convert()
-        background.fill(GRAY)
+        background.fill(WHITE)
         self._display_surf.blit(background, (0, 0))
         pygame.display.flip()
 
@@ -82,12 +74,13 @@ class game():
             pygame.draw.circle(self._display_surf, DRED, circle, 8, 2)
 
     def play(self, image, circles, subject, image_index):
+        # display existing points in the list 'circles'
         self._display_surf.blit(self.boarder, (DISPLAY_SIZE[0] / 2, 0))
         self.previous.draw(self._display_surf)
+        self.allimages.draw(self._display_surf)
         self.undo.draw(self._display_surf)
         self.skip.draw(self._display_surf)
         self.done.draw(self._display_surf)
-        #self.help.draw(self._display_surf)
         playing = True
         prev = False
         raw_metric = None
@@ -113,16 +106,14 @@ class game():
                         except:
                             pass
 
-                    # elif self.help.rect.collidepoint(event.pos):
-                    #     self.help_window = pygame.display.set_mode(H_WINDOW_SIZE)
-                    #     self.help.draw(self.help_window)
-                    #     playing = False
-
                     elif self.skip.rect.collidepoint(event.pos):
                         return None
 
                     elif self.previous.rect.collidepoint(event.pos):
                         if (image_index >= 1): return 20
+
+                    elif self.allimages.rect.collidepoint(event.pos):
+                        return 123
 
                     elif self.done.rect.collidepoint(event.pos):
                         if len(circles) > 0:
@@ -174,15 +165,147 @@ class game():
 
         return False
 
-    def gameLoop(self):
+
+    def menu(self):
+        viewing = True
+        datalist = list(self.data.keys())
+        i = 0
+        y = 0
+        page_end = 10
+        #index at the end of each page
+        onscreen = 0
+        #number of buttons on current screen
+
+        pygame.display.update()
+        background = pygame.Surface(DISPLAY_SIZE)
+        background = background.convert()
+        background.fill(WHITE)
+        self._display_surf.blit(background, (0, 0))
+        pygame.display.flip()
+        pygame.display.update()
+
+        allilist = []
+        #will store all buttons of images
+
+        self.mnext = button(600, DISPLAY_SIZE[1] - 42, 100, 42, "Next",
+                          self.small_font, LBLUE, BLACK)
+        self.mprevious = button(250, DISPLAY_SIZE[1] - 42, 150, 42, "Previous",
+                         self.small_font, LBLUE, BLACK)
+
+        while (i < page_end):
+            self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
+                             self.small_font, GRAY, BLACK)
+            self.n1.draw(self._display_surf)
+            allilist.append(self.n1)
+            pygame.display.update()
+            i += 1
+            y += 47
+
+        self.mnext.draw(self._display_surf)
+        self.mprevious.draw(self._display_surf)
+
+
+        selected = False
+        while viewing:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+
+                    if(page_end <= len(datalist)):
+                        if (self.mnext.rect.collidepoint(event.pos)):
+                            if (page_end+10 <= len(datalist)):
+                                onscreen = 10
+                                y = 0
+                                page_end+=10
+                                self._display_surf.blit(background, (0, 0))
+                                while (i < page_end):
+                                    self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
+                                                     self.small_font, GRAY, BLACK)
+                                    self.n1.draw(self._display_surf)
+                                    allilist.append(self.n1)
+                                    i += 1
+                                    y += 47
+
+                                self.mnext.draw(self._display_surf)
+                                self.mprevious.draw(self._display_surf)
+                                pygame.display.flip()
+                                pygame.display.update()
+
+                            elif (i != len(datalist)):
+                                onscreen = len(datalist) - i
+                                y = 0
+                                self._display_surf.blit(background, (0, 0))
+                                while (i < len(datalist)):
+                                    self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
+                                                     self.small_font, GRAY, BLACK)
+                                    self.n1.draw(self._display_surf)
+                                    allilist.append(self.n1)
+                                    i += 1
+                                    y += 47
+                                    page_end+=1
+
+
+                        elif (self.mprevious.rect.collidepoint(event.pos)):
+                            if (page_end > 10):
+                                y = 0
+                                page_end -= onscreen
+                                i -= (10 + onscreen)
+                                print(i, page_end)
+                                while (i < page_end):
+                                    self.n1 = button(0, 0 + y, DISPLAY_SIZE[0], DISPLAY_SIZE[1] / 10, datalist[i],
+                                                     self.small_font, GRAY, BLACK)
+                                    self.n1.draw(self._display_surf)
+                                    pygame.display.update()
+                                    i += 1
+                                    y += 47
+
+                                self.mnext.draw(self._display_surf)
+                                self.mprevious.draw(self._display_surf)
+
+                                onscreen = 10
+
+                    k = page_end-10
+                    #index of each button on the current page
+                    while (k < page_end):
+                        if (allilist[k]).rect.collidepoint(event.pos):
+                            print("Showing " + datalist[k])
+                            selected = True
+                            self.gameLoop(k)
+                            break
+                        k+=1
+
+                    self.mnext = button(600, DISPLAY_SIZE[1] - 42, 100, 42, "Next",
+                                        self.small_font, LBLUE, BLACK)
+                    self.mnext.draw(self._display_surf)
+                    self.mprevious = button(250, DISPLAY_SIZE[1] - 42, 150, 42, "Previous",
+                                            self.small_font, LBLUE, BLACK)
+                    self.mprevious.draw(self._display_surf)
+
+            if (selected == True):
+                viewing = False
+
+            pygame.display.flip()
+            self.clock.tick(10)
+
+        return False
+
+
+
+
+
+    def gameLoop(self, i1):
         raw_metric = None
         filtered_metric = None
 
         datalist = list(self.data.keys())
-        print(type(datalist))
-        i = 0
+        if i1 == None:
+            i = 0
+        else:
+            i = i1
         while (i < len(datalist)):
-            pygame.display.set_caption("")
+            pygame.display.set_caption(datalist[i])
             width = int(DISPLAY_SIZE[0] / 2)
             height = DISPLAY_SIZE[1]
             image = pygame.transform.scale(pygame.image.load(self.data[datalist[i]]['image-clean']),
@@ -196,19 +319,30 @@ class game():
             playing = True
             skip = False
             previous = False
+            alli = False
             while playing:
+                # upload circles file for the corresponding image
+                # if the file does not exist, then circles = []
+                # if the file does exist, then circles = [content of the file]
                 output = self.play(image, circles, datalist[i], i)
                 if output == 20:
+                    print("Showing " + datalist[i-1])
                     i-=2
                     previous = True
                     break
+                elif output == 123:
+                    alli = True
+                    playing = self.menu()
+                    break
                 elif output is None:
                     skip = True
+                    print("Showing " + datalist[i+1])
                     break
                 raw_metric, filtered_metric = output
                 playing = self.seeing(image, circles, image_done_raw, image_done_filtered, raw_metric, filtered_metric)
 
-            if not skip and not previous:
+
+            if not skip and not previous and not alli:
                 # Saving the metrics
                 this_path = os.path.join(self.data[datalist[i]]['out_path'], str(time.time()))
                 util.csv_save(circles, this_path + "-gold_circles.csv")
@@ -224,10 +358,7 @@ class button():
     def __init__(self, x, y, w, h, text, font, color, textcolor):
         self.color = color
         border = 4
-        #self.rect = pygame.Rect(x + 2*border, y + 2*border, w - 4 * border, h - 4 * border)
-            #thicker borders
         self.rect = pygame.Rect(x + border, y + border, w - 2 * border, h - 2 * border)
-            #thinner borders
         self.font = font
         if textcolor is not None:
             self.text_color = textcolor
